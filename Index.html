@@ -1,0 +1,893 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KAORE Inventario</title>
+  <style>
+    :root {
+      --cream: #f7f1e7;
+      --paper: #fffaf1;
+      --ink: #332316;
+      --coffee: #6f4d35;
+      --olive: #5f6d2d;
+      --leaf: #89945c;
+      --line: #d7c8ae;
+      --red: #c94245;
+      --mango: #e88a1e;
+      --shadow: 0 16px 38px rgba(68, 45, 22, .12);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at top left, rgba(137, 148, 92, .18), transparent 32rem),
+        linear-gradient(135deg, #fbf6ed 0%, var(--cream) 55%, #efe4cf 100%);
+      color: var(--ink);
+    }
+
+    button, input, select, textarea { font: inherit; }
+
+    .shell {
+      width: min(1240px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 28px 0 40px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: end;
+      gap: 18px;
+      padding: 24px;
+      background: rgba(255, 250, 241, .86);
+      border: 1px solid rgba(215, 200, 174, .8);
+      box-shadow: var(--shadow);
+      border-radius: 8px;
+    }
+
+    .brand {
+      display: flex;
+      gap: 18px;
+      align-items: center;
+    }
+
+    .logo {
+      width: min(320px, 52vw);
+      height: auto;
+      display: block;
+      mix-blend-mode: multiply;
+    }
+
+    h1 {
+      margin: 0;
+      color: var(--coffee);
+      font-size: 22px;
+      line-height: 1.1;
+    }
+
+    .subtitle {
+      margin: 2px 0 0;
+      color: var(--olive);
+      font-weight: 700;
+      letter-spacing: .22em;
+      text-transform: uppercase;
+      font-size: 13px;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .btn {
+      border: 1px solid transparent;
+      border-radius: 6px;
+      padding: 10px 14px;
+      cursor: pointer;
+      background: var(--olive);
+      color: white;
+      font-weight: 750;
+      transition: transform .15s ease, background .15s ease, border-color .15s ease;
+    }
+
+    .btn:hover { transform: translateY(-1px); background: #4d5924; }
+    .btn.secondary { background: #fffdf7; color: var(--coffee); border-color: var(--line); }
+    .btn.secondary:hover { background: #f6ead8; }
+    .btn.danger { background: #a64234; }
+
+    .dashboard {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin: 18px 0;
+    }
+
+    .metric, .panel {
+      background: rgba(255, 250, 241, .9);
+      border: 1px solid rgba(215, 200, 174, .82);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    .metric {
+      padding: 16px;
+      min-height: 112px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .metric span {
+      color: var(--olive);
+      font-size: 13px;
+      text-transform: uppercase;
+      font-weight: 800;
+    }
+
+    .metric strong {
+      font-size: 30px;
+      color: var(--coffee);
+      line-height: 1;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .panel { overflow: hidden; }
+
+    .panel-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(244, 235, 218, .72);
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 18px;
+      color: var(--olive);
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 18px 0;
+    }
+
+    .tab {
+      background: #fffdf7;
+      border: 1px solid var(--line);
+      color: var(--coffee);
+      border-radius: 6px;
+      padding: 10px 13px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .tab.active {
+      background: var(--coffee);
+      color: white;
+      border-color: var(--coffee);
+    }
+
+    .view { display: none; }
+    .view.active { display: block; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--paper);
+    }
+
+    th, td {
+      padding: 12px 14px;
+      border-bottom: 1px solid rgba(215, 200, 174, .72);
+      text-align: left;
+      vertical-align: middle;
+    }
+
+    th {
+      color: var(--coffee);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      background: #fff7e8;
+    }
+
+    td { font-size: 14px; }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: rgba(137, 148, 92, .16);
+      color: var(--olive);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .tag.red { color: #9a2c2f; background: rgba(201, 66, 69, .12); }
+    .tag.mango { color: #a75600; background: rgba(232, 138, 30, .14); }
+
+    .stock-low { color: #a64234; font-weight: 850; }
+    .stock-ok { color: var(--olive); font-weight: 850; }
+
+    .form {
+      padding: 18px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .fields {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      color: var(--coffee);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 10px 11px;
+      color: var(--ink);
+      background: #fffdf7;
+      outline: none;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--olive);
+      box-shadow: 0 0 0 3px rgba(137, 148, 92, .18);
+    }
+
+    textarea { min-height: 86px; resize: vertical; }
+
+    .full { grid-column: 1 / -1; }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      padding: 18px;
+    }
+
+    .drink-card {
+      background: #fffdf7;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+      min-height: 238px;
+    }
+
+    .cup {
+      height: 88px;
+      border-radius: 0 0 26px 26px;
+      border: 1px solid rgba(85, 59, 37, .18);
+      background: linear-gradient(180deg, var(--top), var(--bottom));
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cup::before {
+      content: "";
+      position: absolute;
+      inset: 10px 13px auto;
+      height: 18px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.35);
+    }
+
+    .drink-card h3 { margin: 0; color: var(--coffee); font-size: 18px; }
+    .drink-card p { margin: 0; color: #5a493b; line-height: 1.45; font-size: 14px; }
+
+    .card-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      margin-top: auto;
+    }
+
+    .price {
+      font-size: 24px;
+      color: var(--coffee);
+      font-weight: 900;
+    }
+
+    .history {
+      max-height: 356px;
+      overflow: auto;
+    }
+
+    .empty {
+      padding: 26px 18px;
+      color: #725f4d;
+      text-align: center;
+    }
+
+    .toast {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      max-width: 360px;
+      background: var(--coffee);
+      color: white;
+      padding: 14px 16px;
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      transform: translateY(110px);
+      opacity: 0;
+      transition: .22s ease;
+      z-index: 10;
+    }
+
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    @media (max-width: 960px) {
+      header, .grid { grid-template-columns: 1fr; }
+      .dashboard { grid-template-columns: repeat(2, 1fr); }
+      .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .header-actions { justify-content: flex-start; }
+    }
+
+    @media (max-width: 640px) {
+      .shell { width: min(100% - 20px, 1240px); padding-top: 10px; }
+      header { padding: 16px; }
+      .brand { align-items: flex-start; }
+      .logo { width: min(260px, 100%); }
+      .dashboard, .fields, .cards { grid-template-columns: 1fr; }
+      th, td { padding: 10px 9px; font-size: 13px; }
+      .panel-head { align-items: flex-start; flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <div class="brand">
+        <img class="logo" src="kaore-logo.jpg" alt="KAORE Matcha & Coffee">
+        <div>
+          <h1>Sistema de inventario</h1>
+          <p class="subtitle">Matcha & Coffee · Inventario</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="btn secondary" id="exportBtn" type="button">Exportar CSV</button>
+        <button class="btn secondary" id="seedBtn" type="button">Restaurar datos iniciales</button>
+        <button class="btn danger" id="clearBtn" type="button">Borrar datos</button>
+      </div>
+    </header>
+
+    <section class="dashboard" aria-label="Resumen">
+      <article class="metric"><span>Ventas del día</span><strong id="salesToday">$0.00</strong></article>
+      <article class="metric"><span>Productos vendidos</span><strong id="unitsToday">0</strong></article>
+      <article class="metric"><span>Alertas de stock</span><strong id="lowStockCount">0</strong></article>
+      <article class="metric"><span>Valor inventario</span><strong id="inventoryValue">$0.00</strong></article>
+    </section>
+
+    <nav class="tabs" aria-label="Secciones">
+      <button class="tab active" data-view="catalogo" type="button">Bebidas</button>
+      <button class="tab" data-view="inventario" type="button">Inventario</button>
+      <button class="tab" data-view="venta" type="button">Registrar venta</button>
+      <button class="tab" data-view="movimientos" type="button">Movimientos</button>
+    </nav>
+
+    <section id="catalogo" class="view active">
+      <div class="panel">
+        <div class="panel-head">
+          <h2>Bebidas del menú</h2>
+          <span class="tag">Precio base $12.00 USD</span>
+        </div>
+        <div class="cards" id="drinkCards"></div>
+      </div>
+    </section>
+
+    <section id="inventario" class="view">
+      <div class="grid">
+        <div class="panel">
+          <div class="panel-head">
+            <h2>Stock actual</h2>
+            <span class="tag" id="inventoryStatus">Actualizado</span>
+          </div>
+          <div style="overflow:auto">
+            <table>
+              <thead>
+                <tr>
+                  <th>Ingrediente</th>
+                  <th>Categoría</th>
+                  <th>Stock</th>
+                  <th>Mínimo</th>
+                  <th>Costo unit.</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+              <tbody id="inventoryRows"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h2>Agregar stock</h2></div>
+          <form class="form" id="stockForm">
+            <label>Ingrediente
+              <select id="stockItem"></select>
+            </label>
+            <label>Cantidad a sumar
+              <input id="stockQty" type="number" min="0.01" step="0.01" value="1">
+            </label>
+            <label class="full">Nota
+              <textarea id="stockNote" placeholder="Ej. compra, ajuste, proveedor"></textarea>
+            </label>
+            <button class="btn" type="submit">Guardar entrada</button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <section id="venta" class="view">
+      <div class="grid">
+        <div class="panel">
+          <div class="panel-head"><h2>Nueva venta</h2></div>
+          <form class="form" id="saleForm">
+            <div class="fields">
+              <label>Bebida
+                <select id="saleDrink"></select>
+              </label>
+              <label>Cantidad
+                <input id="saleQty" type="number" min="1" step="1" value="1">
+              </label>
+              <label>Temperatura
+                <select id="saleTemp">
+                  <option>Frío</option>
+                  <option>Caliente</option>
+                </select>
+              </label>
+              <label>Leche
+                <select id="saleMilk"></select>
+              </label>
+              <label>Extra
+                <select id="saleExtra"></select>
+              </label>
+              <label>Pago
+                <select id="salePay">
+                  <option>Efectivo</option>
+                  <option>Tarjeta</option>
+                  <option>Transferencia</option>
+                  <option>WhatsApp</option>
+                </select>
+              </label>
+            </div>
+            <label class="full">Notas
+              <textarea id="saleNote" placeholder="Ej. sin hielo, menos dulce, evento"></textarea>
+            </label>
+            <button class="btn" type="submit">Registrar y descontar inventario</button>
+          </form>
+        </div>
+        <div class="panel">
+          <div class="panel-head">
+            <h2>Resumen de venta</h2>
+            <span class="tag" id="saleTotal">$12.00 USD</span>
+          </div>
+          <div class="form" id="recipePreview"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="movimientos" class="view">
+      <div class="panel">
+        <div class="panel-head">
+          <h2>Historial</h2>
+          <button class="btn secondary" id="clearHistoryBtn" type="button">Limpiar historial</button>
+        </div>
+        <div class="history">
+          <table>
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Tipo</th>
+                <th>Detalle</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody id="historyRows"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
+    const todayKey = () => new Date().toISOString().slice(0, 10);
+    const uid = () => Math.random().toString(36).slice(2, 9);
+
+    const defaultData = {
+      drinks: [
+        {
+          id: "matcha-ceremonial",
+          name: "Matcha ceremonial",
+          description: "Matcha ceremonial premium, suave y lleno de beneficios.",
+          price: 12,
+          temp: "Frío / Caliente",
+          colors: ["#95aa49", "#5f7f2d"],
+          recipe: { matcha: 4, milk: 240, ice: 140, cup: 1 }
+        },
+        {
+          id: "matcha-fresa",
+          name: "Matcha de fresa",
+          description: "Matcha ceremonial con fresa natural, dulce y refrescante.",
+          price: 12,
+          temp: "Frío",
+          colors: ["#f48e8d", "#d9464f"],
+          recipe: { matcha: 4, strawberry: 70, milk: 220, ice: 140, cup: 1 }
+        },
+        {
+          id: "matcha-mango",
+          name: "Matcha de mango",
+          description: "Matcha ceremonial con mango natural, fresco y de temporada.",
+          price: 12,
+          temp: "Frío",
+          colors: ["#ffd75a", "#e88a1e"],
+          recipe: { matcha: 4, mango: 75, milk: 220, ice: 140, cup: 1 }
+        },
+        {
+          id: "matcha-platano",
+          name: "Matcha de plátano",
+          description: "Matcha ceremonial con plátano natural, suave, cremoso y nutritivo.",
+          price: 12,
+          temp: "Frío / Caliente",
+          colors: ["#e7dc8d", "#9ba75a"],
+          recipe: { matcha: 4, banana: 80, milk: 230, ice: 120, cup: 1 }
+        },
+        {
+          id: "coffee-latte",
+          name: "Coffee latte",
+          description: "Café de especialidad con leche de tu elección, equilibrado y cremoso.",
+          price: 12,
+          temp: "Frío / Caliente",
+          colors: ["#c47b34", "#f5e3c5"],
+          recipe: { coffee: 18, milk: 240, ice: 120, cup: 1 }
+        }
+      ],
+      inventory: [
+        { id: "matcha", name: "Matcha ceremonial", category: "Base", unit: "g", stock: 500, min: 80, cost: 0.38 },
+        { id: "coffee", name: "Café de especialidad", category: "Base", unit: "g", stock: 900, min: 120, cost: 0.08 },
+        { id: "milk", name: "Leche entera", category: "Leche", unit: "ml", stock: 8000, min: 1500, cost: 0.002 },
+        { id: "lactoseFree", name: "Leche deslactosada", category: "Leche", unit: "ml", stock: 4000, min: 1000, cost: 0.003 },
+        { id: "oat", name: "Leche de avena", category: "Leche vegetal", unit: "ml", stock: 3500, min: 900, cost: 0.004 },
+        { id: "almond", name: "Leche de almendra", category: "Leche vegetal", unit: "ml", stock: 3000, min: 800, cost: 0.005 },
+        { id: "coconut", name: "Leche de coco", category: "Leche vegetal", unit: "ml", stock: 3000, min: 800, cost: 0.004 },
+        { id: "soy", name: "Leche de soya", category: "Leche vegetal", unit: "ml", stock: 3000, min: 800, cost: 0.003 },
+        { id: "strawberry", name: "Fresa natural", category: "Fruta", unit: "g", stock: 1500, min: 350, cost: 0.012 },
+        { id: "mango", name: "Mango natural", category: "Fruta", unit: "g", stock: 1500, min: 350, cost: 0.01 },
+        { id: "banana", name: "Plátano natural", category: "Fruta", unit: "g", stock: 1600, min: 350, cost: 0.006 },
+        { id: "ice", name: "Hielo", category: "Operación", unit: "g", stock: 12000, min: 2500, cost: 0.001 },
+        { id: "cup", name: "Vaso KAORE", category: "Empaque", unit: "pza", stock: 150, min: 30, cost: 0.18 },
+        { id: "extraShot", name: "Extra shot", category: "Extra", unit: "shot", stock: 80, min: 15, cost: 0.22 },
+        { id: "syrup", name: "Sabor extra", category: "Extra", unit: "ml", stock: 1500, min: 250, cost: 0.006 },
+        { id: "extraMatcha", name: "Matcha extra", category: "Extra", unit: "g", stock: 300, min: 60, cost: 0.38 }
+      ],
+      milks: [
+        { id: "milk", name: "Entera", upcharge: 0 },
+        { id: "lactoseFree", name: "Deslactosada", upcharge: 0 },
+        { id: "oat", name: "Avena", upcharge: 1 },
+        { id: "almond", name: "Almendra", upcharge: 1 },
+        { id: "coconut", name: "Coco", upcharge: 1 },
+        { id: "soy", name: "Soya", upcharge: 1 }
+      ],
+      extras: [
+        { id: "none", name: "Sin extra", price: 0, recipe: {} },
+        { id: "extraShot", name: "Extra shot", price: 1, recipe: { extraShot: 1 } },
+        { id: "syrup", name: "Sabor extra", price: 0.75, recipe: { syrup: 30 } },
+        { id: "extraMatcha", name: "Matcha extra", price: 2, recipe: { extraMatcha: 3 } }
+      ],
+      history: []
+    };
+
+    const storeKey = "kaoreInventoryData";
+    let data = loadData();
+
+    function loadData() {
+      const stored = localStorage.getItem(storeKey);
+      if (!stored) return structuredClone(defaultData);
+      try {
+        return JSON.parse(stored);
+      } catch {
+        return structuredClone(defaultData);
+      }
+    }
+
+    function saveData() {
+      localStorage.setItem(storeKey, JSON.stringify(data));
+    }
+
+    function itemById(id) {
+      return data.inventory.find(item => item.id === id);
+    }
+
+    function mergeRecipes(...recipes) {
+      return recipes.reduce((acc, recipe) => {
+        Object.entries(recipe).forEach(([id, qty]) => {
+          acc[id] = (acc[id] || 0) + qty;
+        });
+        return acc;
+      }, {});
+    }
+
+    function getSaleDraft() {
+      const drink = data.drinks.find(item => item.id === document.querySelector("#saleDrink").value);
+      const qty = Number(document.querySelector("#saleQty").value || 1);
+      const milk = data.milks.find(item => item.id === document.querySelector("#saleMilk").value);
+      const extra = data.extras.find(item => item.id === document.querySelector("#saleExtra").value);
+      const recipe = { ...drink.recipe };
+      if (recipe.milk) {
+        recipe[milk.id] = (recipe[milk.id] || 0) + recipe.milk;
+        delete recipe.milk;
+      }
+      const merged = mergeRecipes(recipe, extra.recipe);
+      Object.keys(merged).forEach(id => merged[id] *= qty);
+      return {
+        drink, qty, milk, extra,
+        total: (drink.price + milk.upcharge + extra.price) * qty,
+        recipe: merged
+      };
+    }
+
+    function showToast(message) {
+      const toast = document.querySelector("#toast");
+      toast.textContent = message;
+      toast.classList.add("show");
+      window.clearTimeout(showToast.timer);
+      showToast.timer = window.setTimeout(() => toast.classList.remove("show"), 2600);
+    }
+
+    function render() {
+      renderOptions();
+      renderCards();
+      renderInventory();
+      renderHistory();
+      renderMetrics();
+      renderSalePreview();
+    }
+
+    function renderOptions() {
+      const stockItem = document.querySelector("#stockItem");
+      const saleDrink = document.querySelector("#saleDrink");
+      const saleMilk = document.querySelector("#saleMilk");
+      const saleExtra = document.querySelector("#saleExtra");
+      const selected = {
+        stockItem: stockItem.value,
+        saleDrink: saleDrink.value,
+        saleMilk: saleMilk.value,
+        saleExtra: saleExtra.value
+      };
+      stockItem.innerHTML = data.inventory.map(item => `<option value="${item.id}">${item.name} (${item.unit})</option>`).join("");
+      saleDrink.innerHTML = data.drinks.map(item => `<option value="${item.id}">${item.name}</option>`).join("");
+      saleMilk.innerHTML = data.milks.map(item => `<option value="${item.id}">${item.name}${item.upcharge ? " +$" + item.upcharge : ""}</option>`).join("");
+      saleExtra.innerHTML = data.extras.map(item => `<option value="${item.id}">${item.name}${item.price ? " +$" + item.price : ""}</option>`).join("");
+      Object.entries(selected).forEach(([id, value]) => {
+        if (value && document.querySelector(`#${id} option[value="${value}"]`)) {
+          document.querySelector(`#${id}`).value = value;
+        }
+      });
+    }
+
+    function renderCards() {
+      document.querySelector("#drinkCards").innerHTML = data.drinks.map(drink => `
+        <article class="drink-card">
+          <div class="cup" style="--top:${drink.colors[0]};--bottom:${drink.colors[1]}"></div>
+          <h3>${drink.name}</h3>
+          <p>${drink.description}</p>
+          <div class="card-row">
+            <span class="tag">${drink.temp}</span>
+            <strong class="price">${money.format(drink.price)}</strong>
+          </div>
+        </article>
+      `).join("");
+    }
+
+    function renderInventory() {
+      const rows = data.inventory.map(item => {
+        const isLow = item.stock <= item.min;
+        return `
+          <tr>
+            <td><strong>${item.name}</strong></td>
+            <td>${item.category}</td>
+            <td>${round(item.stock)} ${item.unit}</td>
+            <td>${round(item.min)} ${item.unit}</td>
+            <td>${money.format(item.cost)}</td>
+            <td><span class="${isLow ? "stock-low" : "stock-ok"}">${isLow ? "Reponer" : "Disponible"}</span></td>
+          </tr>
+        `;
+      }).join("");
+      document.querySelector("#inventoryRows").innerHTML = rows;
+      const low = data.inventory.filter(item => item.stock <= item.min).length;
+      document.querySelector("#inventoryStatus").textContent = low ? `${low} alerta(s)` : "Stock saludable";
+    }
+
+    function renderHistory() {
+      const body = document.querySelector("#historyRows");
+      if (!data.history.length) {
+        body.innerHTML = `<tr><td class="empty" colspan="4">Sin movimientos registrados.</td></tr>`;
+        return;
+      }
+      body.innerHTML = data.history.slice().reverse().map(move => `
+        <tr>
+          <td>${new Date(move.date).toLocaleString("es-MX")}</td>
+          <td><span class="tag ${move.type === "Venta" ? "mango" : ""}">${move.type}</span></td>
+          <td>${move.detail}</td>
+          <td>${move.total ? money.format(move.total) : "—"}</td>
+        </tr>
+      `).join("");
+    }
+
+    function renderMetrics() {
+      const today = todayKey();
+      const sales = data.history.filter(move => move.type === "Venta" && move.date.slice(0, 10) === today);
+      const total = sales.reduce((sum, move) => sum + move.total, 0);
+      const units = sales.reduce((sum, move) => sum + (move.qty || 0), 0);
+      const low = data.inventory.filter(item => item.stock <= item.min).length;
+      const value = data.inventory.reduce((sum, item) => sum + item.stock * item.cost, 0);
+      document.querySelector("#salesToday").textContent = money.format(total);
+      document.querySelector("#unitsToday").textContent = units;
+      document.querySelector("#lowStockCount").textContent = low;
+      document.querySelector("#inventoryValue").textContent = money.format(value);
+    }
+
+    function renderSalePreview() {
+      if (!document.querySelector("#saleDrink").value) return;
+      const draft = getSaleDraft();
+      document.querySelector("#saleTotal").textContent = `${money.format(draft.total)} USD`;
+      const recipeLines = Object.entries(draft.recipe).map(([id, qty]) => {
+        const item = itemById(id);
+        const available = item && item.stock >= qty;
+        return `<tr><td>${item?.name || id}</td><td>${round(qty)} ${item?.unit || ""}</td><td class="${available ? "stock-ok" : "stock-low"}">${available ? "OK" : "Falta stock"}</td></tr>`;
+      }).join("");
+      document.querySelector("#recipePreview").innerHTML = `
+        <p><strong>${draft.qty} x ${draft.drink.name}</strong></p>
+        <p>Leche: ${draft.milk.name} · Extra: ${draft.extra.name}</p>
+        <table>
+          <thead><tr><th>Descuento</th><th>Cantidad</th><th>Estado</th></tr></thead>
+          <tbody>${recipeLines}</tbody>
+        </table>
+      `;
+    }
+
+    function round(value) {
+      return Number(value.toFixed(2));
+    }
+
+    function switchView(view) {
+      document.querySelectorAll(".tab").forEach(tab => tab.classList.toggle("active", tab.dataset.view === view));
+      document.querySelectorAll(".view").forEach(section => section.classList.toggle("active", section.id === view));
+    }
+
+    document.querySelectorAll(".tab").forEach(tab => {
+      tab.addEventListener("click", () => switchView(tab.dataset.view));
+    });
+
+    document.querySelector("#stockForm").addEventListener("submit", event => {
+      event.preventDefault();
+      const item = itemById(document.querySelector("#stockItem").value);
+      const qty = Number(document.querySelector("#stockQty").value);
+      const note = document.querySelector("#stockNote").value.trim();
+      if (!item || qty <= 0) return;
+      item.stock = round(item.stock + qty);
+      data.history.push({
+        id: uid(),
+        date: new Date().toISOString(),
+        type: "Entrada",
+        detail: `${item.name}: +${round(qty)} ${item.unit}${note ? " · " + note : ""}`
+      });
+      saveData();
+      render();
+      event.target.reset();
+      document.querySelector("#stockQty").value = 1;
+      showToast("Entrada de inventario guardada.");
+    });
+
+    document.querySelector("#saleForm").addEventListener("submit", event => {
+      event.preventDefault();
+      const draft = getSaleDraft();
+      const missing = Object.entries(draft.recipe).filter(([id, qty]) => {
+        const item = itemById(id);
+        return !item || item.stock < qty;
+      });
+      if (missing.length) {
+        showToast("No hay suficiente inventario para registrar esta venta.");
+        return;
+      }
+      Object.entries(draft.recipe).forEach(([id, qty]) => {
+        const item = itemById(id);
+        item.stock = round(item.stock - qty);
+      });
+      data.history.push({
+        id: uid(),
+        date: new Date().toISOString(),
+        type: "Venta",
+        qty: draft.qty,
+        total: draft.total,
+        detail: `${draft.qty} x ${draft.drink.name} · ${document.querySelector("#saleTemp").value} · leche ${draft.milk.name} · ${draft.extra.name} · ${document.querySelector("#salePay").value}`
+      });
+      saveData();
+      render();
+      showToast("Venta registrada y stock descontado.");
+    });
+
+    ["#saleDrink", "#saleQty", "#saleMilk", "#saleExtra"].forEach(selector => {
+      document.querySelector(selector).addEventListener("input", renderSalePreview);
+      document.querySelector(selector).addEventListener("change", renderSalePreview);
+    });
+
+    document.querySelector("#seedBtn").addEventListener("click", () => {
+      data = structuredClone(defaultData);
+      saveData();
+      render();
+      showToast("Datos iniciales restaurados.");
+    });
+
+    document.querySelector("#clearBtn").addEventListener("click", () => {
+      if (!confirm("¿Borrar todo el inventario y movimientos guardados?")) return;
+      localStorage.removeItem(storeKey);
+      data = structuredClone(defaultData);
+      render();
+      showToast("Datos locales borrados.");
+    });
+
+    document.querySelector("#clearHistoryBtn").addEventListener("click", () => {
+      data.history = [];
+      saveData();
+      render();
+      showToast("Historial limpiado.");
+    });
+
+    document.querySelector("#exportBtn").addEventListener("click", () => {
+      const rows = [["Ingrediente", "Categoria", "Stock", "Unidad", "Minimo", "Costo unitario"]];
+      data.inventory.forEach(item => rows.push([item.name, item.category, item.stock, item.unit, item.min, item.cost]));
+      const csv = rows.map(row => row.map(value => `"${String(value).replaceAll('"', '""')}"`).join(",")).join("\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `kaore-inventario-${todayKey()}.csv`;
+      link.click();
+      URL.revokeObjectURL(url);
+      showToast("CSV exportado.");
+    });
+
+    render();
+  </script>
+</body>
+</html>
